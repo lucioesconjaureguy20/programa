@@ -345,7 +345,6 @@ class GeoAnalyzerApp(ctk.CTk):
             segmented_button_unselected_color=BG_SURF,
             segmented_button_unselected_hover_color=BG_ELEV,
             text_color=TEXT_SEC,
-            selected_color="#000000",
         )
         self.tab_view.pack(fill="both", expand=True, padx=12, pady=(8, 12))
 
