@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": [
+    "electron.vite.config.*",
+    "src/main/**/*",
+    "src/preload/**/*"
+  ],
+  "compilerOptions": {
+    "composite": false,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "module": "CommonJS",
+    "moduleResolution": "bundler",
+    "types": ["electron-vite/node"]
+  }
+}

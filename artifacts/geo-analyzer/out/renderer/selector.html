@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" />
+  <title>Select Region</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      overflow: hidden;
+      cursor: crosshair;
+      user-select: none;
+    }
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+    }
+    #selection {
+      position: fixed;
+      border: 2px solid #3ecf8e;
+      background: rgba(62, 207, 142, 0.08);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+      display: none;
+      pointer-events: none;
+    }
+    #hint {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 15, 15, 0.92);
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 16px 24px;
+      color: #f0f0f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      text-align: center;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+    #hint strong { color: #3ecf8e; display: block; font-size: 16px; margin-bottom: 6px; }
+    #hint small { color: #888; font-size: 12px; }
+    #info {
+      position: fixed;
+      background: rgba(15, 15, 15, 0.92);
+      border: 1px solid #3ecf8e;
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: #3ecf8e;
+      font-family: monospace;
+      font-size: 12px;
+      pointer-events: none;
+      display: none;
+    }
+    #cancel-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 10px 20px;
+      background: rgba(30, 30, 30, 0.9);
+      color: #888;
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    #cancel-btn:hover { color: #ef4444; border-color: #5c2020; }
+  </style>
+</head>
+<body>
+  <div id="overlay"></div>
+  <div id="selection"></div>
+  <div id="hint">
+    <strong>🔲 Select Region</strong>
+    Click and drag to draw a rectangle around your Street View area
+    <br><small>ESC to cancel</small>
+  </div>
+  <div id="info"></div>
+  <button id="cancel-btn">Cancel (ESC)</button>
+
+  <script>
+    const selection = document.getElementById('selection')
+    const hint = document.getElementById('hint')
+    const info = document.getElementById('info')
+    const cancelBtn = document.getElementById('cancel-btn')
+
+    let startX = 0, startY = 0, isDrawing = false
+
+    function updateSelection(x, y, w, h) {
+      selection.style.display = 'block'
+      selection.style.left = x + 'px'
+      selection.style.top = y + 'px'
+      selection.style.width = w + 'px'
+      selection.style.height = h + 'px'
+
+      info.style.display = 'block'
+      info.style.left = (x + w + 8) + 'px'
+      info.style.top = (y) + 'px'
+      info.textContent = `${w} × ${h}`
+
+      if (x + w + 80 > window.innerWidth) {
+        info.style.left = (x - 85) + 'px'
+      }
+    }
+
+    document.addEventListener('mousedown', (e) => {
+      if (e.target === cancelBtn) return
+      isDrawing = true
+      startX = e.clientX
+      startY = e.clientY
+      hint.style.display = 'none'
+    })
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDrawing) return
+      const x = Math.min(e.clientX, startX)
+      const y = Math.min(e.clientY, startY)
+      const w = Math.abs(e.clientX - startX)
+      const h = Math.abs(e.clientY - startY)
+      updateSelection(x, y, w, h)
+    })
+
+    document.addEventListener('mouseup', (e) => {
+      if (!isDrawing) return
+      isDrawing = false
+
+      const x = Math.min(e.clientX, startX)
+      const y = Math.min(e.clientY, startY)
+      const w = Math.abs(e.clientX - startX)
+      const h = Math.abs(e.clientY - startY)
+
+      if (w < 20 || h < 20) {
+        hint.style.display = 'block'
+        selection.style.display = 'none'
+        info.style.display = 'none'
+        return
+      }
+
+      window.api.regionSelected({ x: Math.round(x), y: Math.round(y), width: Math.round(w), height: Math.round(h) })
+    })
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') window.api.closeSelector()
+    })
+
+    cancelBtn.addEventListener('click', () => window.api.closeSelector())
+  </script>
+</body>
+</html>
