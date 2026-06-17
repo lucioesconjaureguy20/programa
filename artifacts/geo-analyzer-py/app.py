@@ -83,12 +83,29 @@ def load_logs(limit=50):
     return result
 
 
+# ─── DPI scale helper ────────────────────────────────────────────────────────
+def _get_dpi_scale():
+    """Return physical/logical pixel ratio for the primary monitor."""
+    try:
+        with mss.mss() as sct:
+            phys_w = sct.monitors[1]["width"]
+        tmp = tk.Tk()
+        tmp.withdraw()
+        log_w = tmp.winfo_screenwidth()
+        tmp.destroy()
+        return phys_w / log_w if log_w > 0 else 1.0
+    except Exception:
+        return 1.0
+
+
 # ─── Screen region selector ──────────────────────────────────────────────────
 class RegionSelector:
     """Full-screen transparent overlay to draw a selection rectangle."""
 
     def __init__(self, callback):
         self.callback = callback
+        self._dpi = _get_dpi_scale()   # e.g. 1.25 at 125% Windows scaling
+
         self.root = tk.Toplevel()
         self.root.attributes("-fullscreen", True)
         self.root.attributes("-alpha", 0.35)
@@ -146,7 +163,14 @@ class RegionSelector:
         w, h = x2 - x1, y2 - y1
         self.root.destroy()
         if w > 20 and h > 20:
-            self.callback({"x": x1, "y": y1, "width": w, "height": h})
+            # Scale logical pixels → physical pixels (fixes Windows DPI scaling)
+            d = self._dpi
+            self.callback({
+                "x": int(x1 * d),
+                "y": int(y1 * d),
+                "width": int(w * d),
+                "height": int(h * d)
+            })
 
 
 # ─── OpenAI Vision ───────────────────────────────────────────────────────────
