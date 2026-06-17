@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Ks3uv84a01qy3gmcWVpXt"
+uri = "file://GeoAnalyzer.zip"
+type = "unspecified"
+title = "GeoAnalyzer — código fuente completo"
